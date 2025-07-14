@@ -1,5 +1,5 @@
 from typing import TypedDict
-from pydantic import Field
+from pydantic import Field, BaseModel
 from pymongo.asynchronous.collection import AsyncCollection
 from ..db import database
 
