@@ -10,7 +10,7 @@ load_dotenv()
 
 client = OpenAI(
     api_key=os.getenv("GEMINI_API_KEY"),
-    base_url="https://generativelanguage.googleapis.com/v1beta/openai/"
+    base_url="https://generativelanguage.googleapis.com/v1beta/openai/",
 )
 
 
@@ -34,46 +34,60 @@ async def process_file(id: str, file_path: str):
 
         # Save each page as an image file
         for i, image in enumerate(images):
-            image_save_path = f"/mnt/uploads/images/{id}/image-{i+1}.png"
+            image_save_path = f"/mnt/uploads/images/{id}/image-{i + 1}.png"
             os.makedirs(os.path.dirname(image_save_path), exist_ok=True)
             image.save(image_save_path, "PNG")
             store_images.append(image_save_path)
 
         await files_collection.update_one(
-            {"_id": ObjectId(id)}, {
-                "$set": {"status": "Successfully converted to images"}}
+            {"_id": ObjectId(id)},
+            {"$set": {"status": "Successfully converted to images"}},
         )
 
-        print(
-            f"Successfully converted {len(images)} pages from {file_path} to images.")
+        print(f"Successfully converted {len(images)} pages from {file_path} to images.")
 
     except Exception as e:
         print(f"Error during PDF conversion: {e}")
 
     base64_image = [encode_image(img) for img in store_images]
 
-    response = client.chat.completions.create(
-        model="gemini-2.5-flash",
-        reasoning_effort="low",
-        messages=[
+    content = [
+        {
+            "type": "text",
+            "text": "Based on the given resume pages below, roast the resume. Analyze all pages comprehensively.",
+        }
+    ]
+
+    # Add all images to the content
+    for i, img_base64 in enumerate(base64_image):
+        content.append(
             {
-                "role": "user",
-                "content": [
-                    {"type": "text", "text": "Based on the given resume below roast the resume"},
-                    {
-                        "type": "image_url",
-                        "image_url": {
-                            "url": f"data:image/png;base64,{base64_image[0]}"
-                        }
-                    }
-                ]
+                "type": "image_url",
+                "image_url": {"url": f"data:image/png;base64,{img_base64}"},
             }
-        ]
+        )
+
+    response = client.chat.completions.create(
+        model="gemini-2.0-flash-exp",  # Use available model
+        messages=[{"role": "user", "content": content}],
     )
 
-    await files_collection.update_one({"_id": ObjectId(id)}, {
-        "$set": {
-            "status": "processed sucessfully",
-            "result": response.choices[0].message.content
-        }
-    })
+    await files_collection.update_one(
+        {"_id": ObjectId(id)},
+        {
+            "$set": {
+                "status": "processed sucessfully",
+                "result": response.choices[0].message.content,
+            }
+        },
+    )
+
+    # TODO: Delete the file after processing
+    try:
+        os.remove(file_path)
+        for img in store_images:
+            os.remove(img)
+    except Exception as e:
+        print(f"Error deleting files: {e}")
+
+    # TODO: Analyse the resume for a job description taken as a input by user and check if he is fit for the job
