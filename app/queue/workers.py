@@ -27,10 +27,10 @@ async def process_file(id: str, file_path: str):
     print("Processing file...")
 
     # Convert pdf to image
+    store_images = []
     try:
         # Convert PDF to a list of PIL Image objects
         images = convert_from_path(file_path)
-        store_images = []
 
         # Save each page as an image file
         for i, image in enumerate(images):
@@ -45,7 +45,6 @@ async def process_file(id: str, file_path: str):
         )
 
         print(f"Successfully converted {len(images)} pages from {file_path} to images.")
-
     except Exception as e:
         print(f"Error during PDF conversion: {e}")
 
