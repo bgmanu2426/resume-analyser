@@ -82,7 +82,6 @@ async def process_file(id: str, file_path: str):
         },
     )
 
-    # TODO: Delete the file after processing
     try:
         os.remove(file_path)
         for img in store_images:
@@ -91,3 +90,4 @@ async def process_file(id: str, file_path: str):
         print(f"Error deleting files: {e}")
 
     # TODO: Analyse the resume for a job description taken as a input by user and check if he is fit for the job
+    # TODO: E-mail the result to the user
