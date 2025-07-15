@@ -59,7 +59,7 @@ async def process_file(id: str, file_path: str):
             {
                 "role": "user",
                 "content": [
-                    {"type": "text", "text": " Beast of the given resume below roast the Resume"},
+                    {"type": "text", "text": "Based on the given resume below roast the resume"},
                     {
                         "type": "image_url",
                         "image_url": {
@@ -71,4 +71,9 @@ async def process_file(id: str, file_path: str):
         ]
     )
 
-    print(response.choices[0].message.content)
+    await files_collection.update_one({"_id": ObjectId(id)}, {
+        "$set": {
+            "status": "processed sucessfully",
+            "result": response.choices[0].message.content
+        }
+    })
