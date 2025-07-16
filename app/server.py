@@ -14,22 +14,6 @@ def hello():
     return {"status": "Hello World!"}
 
 
-@app.get("/{file_id}")
-async def get_file_by_id(
-    file_id: str = Path(..., description="The ID of the file to retrieve"),
-):
-    file = await files_collection.find_one({"_id": ObjectId(file_id)})
-    if not file:
-        return {"status": "File not found"}
-    return {
-        "message": "File found",
-        "id": str(file["_id"]),
-        "FileName": file["name"],
-        "status": file["status"],
-        "result": file["result"] if "result" in file else None,
-    }
-
-
 @app.post("/upload")
 async def upload_file(file: UploadFile):
     db_file = await files_collection.insert_one(
@@ -48,3 +32,19 @@ async def upload_file(file: UploadFile):
     q.enqueue(process_file, str(db_file.inserted_id), file_path)
 
     return {"status": "File uploaded successfully", "file_id": str(db_file.inserted_id)}
+
+
+@app.get("/{file_id}")
+async def get_file_by_id(
+    file_id: str = Path(..., description="The ID of the file to retrieve"),
+):
+    file = await files_collection.find_one({"_id": ObjectId(file_id)})
+    if not file:
+        return {"status": "File not found"}
+    return {
+        "message": "File found",
+        "id": str(file["_id"]),
+        "FileName": file["name"],
+        "status": file["status"],
+        "result": file["result"] if "result" in file else None,
+    }
