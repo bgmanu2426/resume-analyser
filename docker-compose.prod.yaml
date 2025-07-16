@@ -21,6 +21,8 @@ services:
       - ./.env
     ports:
       - "8000:8000"
+    volumes:
+      - uploads_data:/mnt/uploads
 
   worker:
     command:
@@ -32,7 +34,10 @@ services:
       - ./.env
     ports:
       - "8001:8001"
+    volumes:
+      - uploads_data:/mnt/uploads
 
 volumes:
   mongodb_data:
   valkey_data:
+  uploads_data:
