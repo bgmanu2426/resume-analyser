@@ -60,16 +60,37 @@ async def process_file(id: str, file_path: str):
 
     base64_image = [encode_image(img) for img in store_images]
 
-    # Create a detailed prompt for resume analysis against job role
+    # Create a detailed prompt for resume analysis against job role in JSON format
     content = [
         {
             "type": "text",
-            "text": f"""Analyze this resume for the role of {job_role}. Provide a detailed analysis including:
-1. Match percentage: Provide a numerical assessment (0-100%) of how well the resume matches the requirements for the job role.
-2. Strengths: What aspects of the resume align well with the job role?
-3. Weaknesses: What's missing or could be improved in the resume for this specific role?
-4. Recommendations: Specific suggestions to improve the resume for this job role.
-5. Overall assessment: A brief conclusion on the candidate's suitability for the role.
+            "text": f"""Analyze this resume for the role of {job_role}. 
+            
+Provide your analysis in the following JSON structure:
+
+```json
+{{
+  "job_description": "A brief description of the job role requirements",
+  "strength": [
+    "Strength point 1",
+    "Strength point 2",
+    "..."
+  ],
+  "weakness": [
+    "Weakness point 1",
+    "Weakness point 2",
+    "..."
+  ],
+  "changes_needed": [
+    "Recommendation 1",
+    "Recommendation 2",
+    "..."
+  ],
+  "overall_summary": "A brief overall assessment of the candidate's suitability for the role, including match percentage"
+}}
+```
+
+Make sure your response is ONLY the valid JSON object, with no additional text before or after. Each section should be detailed and specific to help the candidate understand their fit for the role.
 """
         }
     ]
@@ -90,14 +111,49 @@ async def process_file(id: str, file_path: str):
     
     analysis_result = response.choices[0].message.content
     
+    # Parse JSON response or handle text response
+    import json
+    import re
+    
+    # Try to extract JSON from the response if it's not already JSON
+    # This handles cases where model might wrap the JSON in markdown code blocks
+    json_match = re.search(r'```json\s*([\s\S]*?)\s*```', analysis_result)
+    if json_match:
+        # Extract JSON from code block
+        json_str = json_match.group(1)
+        try:
+            analysis_json = json.loads(json_str)
+        except json.JSONDecodeError:
+            # If extraction fails, use original response
+            analysis_json = {"overall_summary": analysis_result}
+    else:
+        # Try parsing directly
+        try:
+            analysis_json = json.loads(analysis_result)
+        except json.JSONDecodeError:
+            # If parsing fails, use original response in summary field
+            analysis_json = {"overall_summary": analysis_result}
+    
+    # Save the structured analysis in the database
+    await files_collection.update_one(
+        {"_id": ObjectId(id)},
+        {"$set": {"result": analysis_json, "status": "completed"}}
+    )
+    
     # Send email with analysis results
     if user_email:
         email_response = send_resume_analysis_email(
             recipient_email=user_email,
-            analysis_result=analysis_result,
+            analysis_result=analysis_json,
             job_role=job_role
         )
         email_status = "Email sent successfully" if not email_response.get("error") else f"Email sending failed: {email_response.get('error')}"
+        
+        # Update email status in the database
+        await files_collection.update_one(
+            {"_id": ObjectId(id)},
+            {"$set": {"email_status": email_status}}
+        )
     else:
         email_status = "No email provided"
 
