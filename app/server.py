@@ -1,23 +1,38 @@
-from fastapi import FastAPI, UploadFile, Path
+from fastapi import FastAPI, UploadFile, Path, Form
+from fastapi.staticfiles import StaticFiles
+from fastapi.responses import RedirectResponse
 from .utils.file import save_to_disk
 from .db.collections.files import files_collection, FileSchema
 from .queue.q import q
 from .queue.workers import process_file
 from bson import ObjectId
+import os
 
 
 app = FastAPI()
 
+# Mount static files directory
+app.mount("/static", StaticFiles(directory=os.path.join(os.path.dirname(__file__), "static")), name="static")
+
 
 @app.get("/")
-def hello():
-    return {"status": "Hello World!"}
+def root():
+    return RedirectResponse(url="/static/index.html")
 
 
 @app.post("/upload")
-async def upload_file(file: UploadFile):
+async def upload_file(
+    file: UploadFile, 
+    job_role: str = Form(...), 
+    email: str = Form(...)
+):
     db_file = await files_collection.insert_one(
-        document=FileSchema(name=file.filename, status="saving")  # type:ignore
+        document=FileSchema(
+            name=file.filename, 
+            status="saving", 
+            job_role=job_role, 
+            email=email
+        )  # type:ignore
     )
 
     file_path = f"/mnt/uploads/{str(db_file.inserted_id)}/{file.filename}"
@@ -47,4 +62,5 @@ async def get_file_by_id(
         "FileName": file["name"],
         "status": file["status"],
         "result": file["result"] if "result" in file else None,
+        "email_status": file["email_status"] if "email_status" in file else None,
     }

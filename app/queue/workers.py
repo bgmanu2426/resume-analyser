@@ -5,6 +5,7 @@ import os
 from dotenv import load_dotenv
 import base64
 from openai import OpenAI
+from ..utils.email import send_resume_analysis_email
 
 load_dotenv()
 
@@ -21,10 +22,19 @@ def encode_image(image_path):
 
 
 async def process_file(id: str, file_path: str):
+    # Get file record from database to access job_role and email
+    file_record = await files_collection.find_one({"_id": ObjectId(id)})
+    if not file_record:
+        print(f"Error: File record with ID {id} not found")
+        return
+    
+    job_role = file_record.get("job_role", "")
+    user_email = file_record.get("email", "")
+    
     await files_collection.update_one(
         {"_id": ObjectId(id)}, {"$set": {"status": "processing"}}
     )
-    print("Processing file...")
+    print(f"Processing file for job role: {job_role}...")
 
     # Convert pdf to image
     store_images = []
@@ -50,10 +60,17 @@ async def process_file(id: str, file_path: str):
 
     base64_image = [encode_image(img) for img in store_images]
 
+    # Create a detailed prompt for resume analysis against job role
     content = [
         {
             "type": "text",
-            "text": "Based on the given resume pages below, roast the resume. Analyze all pages comprehensively.",
+            "text": f"""Analyze this resume for the role of {job_role}. Provide a detailed analysis including:
+1. Match percentage: Provide a numerical assessment (0-100%) of how well the resume matches the requirements for the job role.
+2. Strengths: What aspects of the resume align well with the job role?
+3. Weaknesses: What's missing or could be improved in the resume for this specific role?
+4. Recommendations: Specific suggestions to improve the resume for this job role.
+5. Overall assessment: A brief conclusion on the candidate's suitability for the role.
+"""
         }
     ]
 
@@ -70,13 +87,27 @@ async def process_file(id: str, file_path: str):
         model="gemini-2.0-flash-exp",  # Use available model
         messages=[{"role": "user", "content": content}],
     )
+    
+    analysis_result = response.choices[0].message.content
+    
+    # Send email with analysis results
+    if user_email:
+        email_response = send_resume_analysis_email(
+            recipient_email=user_email,
+            analysis_result=analysis_result,
+            job_role=job_role
+        )
+        email_status = "Email sent successfully" if not email_response.get("error") else f"Email sending failed: {email_response.get('error')}"
+    else:
+        email_status = "No email provided"
 
     await files_collection.update_one(
         {"_id": ObjectId(id)},
         {
             "$set": {
-                "status": "processed sucessfully",
-                "result": response.choices[0].message.content,
+                "status": "processed successfully",
+                "result": analysis_result,
+                "email_status": email_status
             }
         },
     )
@@ -88,5 +119,4 @@ async def process_file(id: str, file_path: str):
     except Exception as e:
         print(f"Error deleting files: {e}")
 
-    # TODO: Analyse the resume for a job description taken as a input by user and check if he is fit for the job
     # TODO: E-mail the result to the user

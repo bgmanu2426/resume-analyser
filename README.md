@@ -1,4 +1,4 @@
-# 🎯 Resume Analyzer
+# 🎯 Resume Job Match Analyzer
 
 <div align="center">
 
@@ -25,7 +25,7 @@ In today's competitive job market, having a well-crafted resume is crucial for l
 
 ## 💡 Our Solution
 
-**Resume Analyzer** is an intelligent, AI-powered system that solves these problems by providing:
+**Resume Job Match Analyzer** is an intelligent, AI-powered system that solves these problems by providing:
 
 ### 🎯 **Job Fit Assessment**
 - **Role compatibility analysis**: Evaluates how well your current resume matches specific job requirements
@@ -49,6 +49,8 @@ In today's competitive job market, having a well-crafted resume is crucial for l
 
 ### 🎨 **User-Friendly Experience**
 - **Simple upload interface**: Easy drag-and-drop resume submission
+- **Job role targeting**: Specify which position you're applying for
+- **Email delivery**: Get your analysis delivered directly to your inbox
 - **Job fit scoring**: Get instant compatibility scores for different roles
 - **Actionable insights**: Receive specific recommendations for career advancement
 - **Skills roadmap**: Clear guidance on what to learn or improve next
@@ -71,6 +73,9 @@ In today's competitive job market, having a well-crafted resume is crucial for l
 ### **Queue & Background Processing**
 - **Redis Queue (RQ)** - Simple job queue for Python
 - **Valkey** - Redis-compatible in-memory data store
+
+### **Email Delivery**
+- **Resend** - Email API for sending analysis reports to users
 
 ### **Infrastructure & Deployment**
 - **Docker & Docker Compose** - Containerized deployment
