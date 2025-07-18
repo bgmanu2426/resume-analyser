@@ -1,6 +1,7 @@
 import os
 from dotenv import load_dotenv
 import resend
+from datetime import datetime
 
 load_dotenv()
 
@@ -231,7 +232,7 @@ def send_resume_analysis_email(recipient_email: str, analysis_result: str, job_r
                     
                     <div class="footer">
                         This is an automated email. Please do not reply to this message.<br>
-                        © {os.getenv("COMPANY_NAME", "Resume Analyzer")} {os.getenv("CURRENT_YEAR", "2025")}
+                        © "Resume Analyzer" {datetime.now().year}
                     </div>
                 </div>
             </body>
@@ -242,10 +243,10 @@ def send_resume_analysis_email(recipient_email: str, analysis_result: str, job_r
         params = {
             "from": "Resume Analysis <no-reply@lnbg.in>",
             "to": recipient_email,
-            "subject": f"Resume Analysis for {job_role} Position",
+            "subject": f"Resume Analysis Report for {job_role} Position",
             "html": formatted_html
         }
-        response = resend.Emails.send(params)
+        response = resend.Emails.send(params) # type: ignore
         
         return response
     except Exception as e:

@@ -1,86 +1,57 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Resume Analyzer</title>
     <link rel="stylesheet" href="/static/styles.css">
 </head>
+
 <body>
     <div class="container">
         <header>
             <h1>Resume Analyzer</h1>
             <p>Upload your resume and get personalized analysis</p>
         </header>
-        
+
         <div class="upload-container">
             <form id="uploadForm" enctype="multipart/form-data">
                 <div class="form-group">
-                    <label for="file">Upload Resume (PDF/DOCX)</label>
-                    <input type="file" id="file" name="file" accept=".pdf,.docx" required>
+                    <label for="file">Upload Resume (PDF)</label>
+                    <input type="file" id="file" name="file" accept=".pdf" required>
+                    <div id="file-error" class="error-message hidden">⚠️ Invalid file format. Please upload a PDF file
+                        only.</div>
                 </div>
-                
+
                 <div class="form-group">
                     <label for="job_role">Job Role</label>
-                    <input type="text" id="job_role" name="job_role" placeholder="Enter the job role you're applying for" required>
+                    <input type="text" id="job_role" name="job_role"
+                        placeholder="Enter yor jo role" required>
                 </div>
-                
+
                 <div class="form-group">
                     <label for="email">Email</label>
-                    <input type="email" id="email" name="email" placeholder="Your email address to receive results" required>
+                    <input type="email" id="email" name="email" placeholder="Your email address to receive results"
+                        required>
                 </div>
-                
+
                 <button type="submit" id="submitBtn">Analyze Resume</button>
             </form>
-        </div>
-        
-        <div id="result" class="result hidden">
+        </div>        <div id="result" class="result hidden">
             <h2 id="result-heading">Processing...</h2>
             <div class="loader" id="result-loader"></div>
             <p id="status-message">Your resume is being analyzed. You'll receive results via email.</p>
             <p id="file-id"></p>
             <button id="checkStatusBtn" class="hidden">Check Status</button>
-            
-            <div id="analysis-results" class="analysis-content hidden">
-                <div class="job-role-info">
-                    <h3>Job Role Applied For:</h3>
-                    <p id="job-role-display"></p>
-                </div>
-                
-                <div class="section strength">
-                    <h3>Strengths</h3>
-                    <div id="strengths-content"></div>
-                </div>
-                
-                <div class="section weakness">
-                    <h3>Weaknesses</h3>
-                    <div id="weaknesses-content"></div>
-                </div>
-                
-                <div class="section changes">
-                    <h3>Changes Needed</h3>
-                    <div id="changes-content"></div>
-                </div>
-                
-                <div class="section summary">
-                    <h3>Overall Summary</h3>
-                    <div id="summary-content"></div>
-                </div>
-            </div>
-        </div>
-        
-        <div id="history" class="history hidden">
-            <h2>Analysis History</h2>
-            <div id="history-container">
-                <!-- Analysis history will be displayed here -->
-            </div>
         </div>
     </div>
-    
+
     <footer>
-        <p>© Resume Analyzer 2025</p>
+        <p>Made by <a href="https://lnbg.in/">bgmanu2426</a></p>
     </footer>
 
     <script src="/static/script.js"></script>
 </body>
+
 </html>
